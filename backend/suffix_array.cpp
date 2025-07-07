@@ -26,7 +26,6 @@ public:
         }
         text[n] = '\0';
         
-        // Usar qsort_s (compatible con Windows)
         qsort_s(
             SA, 
             n, 
