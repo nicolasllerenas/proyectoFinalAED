@@ -1,90 +1,131 @@
 #include <iostream>
-#include <cstring>
-#include <cstdlib>
+#include <vector>
+#include <algorithm>
+#include <string>
+
+using namespace std;
 
 class SuffixArray {
 private:
-    int* SA;
-    char* text;
-    int n;
+    vector<int> SA;
+    string text;
 
-    // Función de comparación para qsort
-    static int cmp(void* context, const void* a, const void* b) {
-        char* text = static_cast<char*>(context);
-        int i = *(const int*)a;
-        int j = *(const int*)b;
-        return strcmp(text + i, text + j);
+    // Construir SA con método naive
+    void build() {
+        vector<pair<int, string>> suffixes;
+        int n = text.size();
+        for (int i = 0; i < n; i++) {
+            suffixes.push_back({i, text.substr(i)});
+        }
+        
+        sort(suffixes.begin(), suffixes.end(), 
+            [](const pair<int, string>& a, const pair<int, string>& b) {
+                return a.second < b.second;
+            });
+        
+        SA.clear();
+        for (const auto& p : suffixes) {
+            SA.push_back(p.first);
+        }
     }
 
 public:
-    SuffixArray(const char* str, int len) : n(len) {
-        text = new char[n + 1];
-        SA = new int[n];
-        for (int i = 0; i < n; i++) {
-            text[i] = str[i];
-            SA[i] = i;
+    SuffixArray(const string& str) : text(str) {
+        build();
+    }
+
+    void print() {
+        cout << "\nSuffix Array para \"" << text << "\":" << endl;
+        cout << "Indice\tPosicion\tSufijo" << endl;
+        for (int i = 0; i < SA.size(); i++) {
+            cout << i << "\t" << SA[i] << "\t\t" << text.substr(SA[i]) << endl;
         }
-        text[n] = '\0';
-        
-        qsort_s(
-            SA, 
-            n, 
-            sizeof(int), 
-            cmp,
-            text
-        );
     }
 
-    ~SuffixArray() {
-        delete[] SA;
-        delete[] text;
-    }
-
-    // Búsqueda de patrón
-    int search(const char* pattern) {
-        int m = strlen(pattern);
+    void searchPattern(const string& pattern) {
+        int n = SA.size();
+        int m = pattern.size();
         int l = 0, r = n - 1;
-        
+        int found = -1;
+
         while (l <= r) {
             int mid = (l + r) / 2;
-            int cmp_res = strncmp(pattern, text + SA[mid], m);
+            string suffix = text.substr(SA[mid], m);
             
-            if (cmp_res == 0) return SA[mid];    // Encontrado
-            if (cmp_res < 0) r = mid - 1;
-            else l = mid + 1;
+            if (pattern == suffix) {
+                found = SA[mid];
+                break;
+            }
+            
+            if (pattern < suffix) {
+                r = mid - 1;
+            } else {
+                l = mid + 1;
+            }
         }
-        return -1;  // No encontrado
-    }
 
-    // Obtener SA como string
-    char* get_sa_string() {
-        char* buffer = new char[n * 12];  // Suficiente espacio
-        buffer[0] = '\0';
-        
-        for (int i = 0; i < n; i++) {
-            char num[12];
-            sprintf(num, "%d ", SA[i]);
-            strcat(buffer, num);
+        if (found != -1) {
+            cout << "Patron \"" << pattern << "\" encontrado en posicion: " << found << endl;
+            cout << "Texto: " << text << endl;
+            cout << "        ";
+            for (int i = 0; i < found; i++) cout << " ";
+            cout << "^";
+            if (pattern.size() > 1) {
+                for (int i = 0; i < pattern.size()-1; i++) cout << "~";
+            }
+            cout << endl;
+        } else {
+            cout << "Patron \"" << pattern << "\" no encontrado." << endl;
         }
-        return buffer;
     }
 };
 
-// Interfaz para Python
-extern "C" {
-    SuffixArray* create_sa(const char* text, int len) {
-        return new SuffixArray(text, len);
+int main() {
+    string inputText = "banana$";
+    SuffixArray sa(inputText);
+    int choice;
+
+    while (true) {
+        cout << "\nTexto actual: " << inputText << endl;
+        cout << "\nMenu Suffix Array:" << endl;
+        cout << "1. Cambiar texto" << endl;
+        cout << "2. Mostrar Suffix Array" << endl;
+        cout << "3. Buscar patron" << endl;
+        cout << "4. Salir" << endl;
+        cout << "Elija una opcion: ";
+        cin >> choice;
+        cin.ignore(); // Para consumir el salto de línea
+
+        switch (choice) {
+            case 1: {
+                cout << "Ingrese el nuevo texto (debe terminar con $): ";
+                getline(cin, inputText);
+                if (inputText.back() != '$') {
+                    inputText += '$';
+                }
+                sa = SuffixArray(inputText);
+                break;
+            }
+            case 2: {
+                sa.print();
+                break;
+            }
+            case 3: {
+                string pattern;
+                cout << "Ingrese el patron a buscar: ";
+                getline(cin, pattern);
+                sa.searchPattern(pattern);
+                break;
+            }
+            case 4: {
+                cout << "Saliendo..." << endl;
+                return 0;
+            }
+            default: {
+                cout << "Opcion invalida. Intente de nuevo." << endl;
+                break;
+            }
+        }
     }
-    
-    void free_sa(SuffixArray* sa) {
-        delete sa;
-    }
-    
-    char* get_sa(SuffixArray* sa) {
-        return sa->get_sa_string();
-    }
-    
-    int search_pattern(SuffixArray* sa, const char* pattern) {
-        return sa->search(pattern);
-    }
+    return 0;
 }
