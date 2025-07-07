@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Suffix Array Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Suffix Array Visualizer</h1>
+        
+        <div class="input-section">
+            <textarea id="input-text" placeholder="Enter text (end with $)">banana$</textarea>
+            <button id="build-btn">Build Suffix Array</button>
+        </div>
+        
+        <div class="output-section">
+            <h2>Suffix Array</h2>
+            <div id="visualization"></div>
+        </div>
+        
+        <div class="search-section">
+            <input type="text" id="search-pattern" placeholder="Search pattern">
+            <button id="search-btn">Search</button>
+            <div id="search-result"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
